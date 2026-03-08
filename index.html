@@ -9,119 +9,662 @@
 <title>AQSEE Memo</title>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-<style>@import url('https://fonts.googleapis.com/css2?family=Klee+One&family=Outfit:wght@400;600&family=Zen+Maru+Gothic:wght@400;700&display=swap');
-*{margin:0;padding:0;box-sizing:border-box}html,body{height:100%;overflow:hidden}
-body{font-family:'Zen Maru Gothic',sans-serif;background:transparent}
-.note{position:fixed;width:280px;height:300px;top:40px;right:40px;display:flex;flex-direction:column;border-radius:4px;background:#4a6888;box-shadow:0 4px 24px rgba(42,56,72,.22),0 1px 4px rgba(42,56,72,.15);user-select:none;z-index:9999;transition:box-shadow .15s}
-.note.dragging{box-shadow:0 12px 40px rgba(42,56,72,.32)}
-.hdr{display:flex;align-items:center;height:28px;min-height:28px;flex-shrink:0;padding:0 2px 0 6px;cursor:grab;border-radius:4px 4px 0 0;background:rgba(0,0,0,.08);gap:4px}
-.logo{display:flex;align-items:center;gap:3px;pointer-events:none;flex-shrink:0}
-.logo svg{width:14px;height:14px}
-.logo-text{font-family:'Outfit',sans-serif;font-size:8px;font-weight:600;color:#dbd8d3;letter-spacing:2.5px;opacity:.7}
-.sync-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;transition:all .4s;margin-left:2px}
-.sync-dot.off{background:rgba(219,216,211,.15)}.sync-dot.on{background:#dbd8d3;box-shadow:0 0 5px rgba(219,216,211,.4);animation:pulse 2.5s ease infinite}.sync-dot.err{background:#c0392b}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-.hdr-s{flex:1}
-.hbtn{width:20px;height:20px;flex-shrink:0;background:transparent;border:none;color:rgba(219,216,211,.2);font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .1s;border-radius:3px}
-.hbtn:hover{background:rgba(219,216,211,.08);color:rgba(219,216,211,.55)}
-.hbtn.del-tab{font-size:12px}.hbtn.del-tab:hover{color:#e8a87c;background:rgba(232,168,124,.08)}
-.hbtn.close:hover{color:#e8a87c;background:rgba(232,168,124,.08)}
-.tab-bar{display:flex;align-items:end;height:24px;min-height:24px;flex-shrink:0;padding:0 4px;gap:1px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid rgba(219,216,211,.06)}
-.tab-bar::-webkit-scrollbar{display:none}
-.tab{padding:3px 10px 2px;font-size:9px;font-weight:500;color:rgba(219,216,211,.25);cursor:pointer;transition:all .1s;white-space:nowrap;flex-shrink:0;border-radius:4px 4px 0 0;background:transparent}
-.tab:hover{background:rgba(255,255,255,.06);color:rgba(219,216,211,.5)}
-.tab.active{background:rgba(255,255,255,.1);color:#dbd8d3;font-weight:700}
-.tab-add{width:18px;height:18px;flex-shrink:0;background:transparent;border:none;color:rgba(219,216,211,.18);font-size:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:3px}
-.tab-add:hover{background:rgba(219,216,211,.06);color:rgba(219,216,211,.5)}
-.content{flex:1;position:relative;overflow:hidden}
-.mp{position:absolute;inset:0;display:none;flex-direction:column}.mp.active{display:flex}
-.ma{flex:1;background:transparent;border:none;outline:none;resize:none;padding:6px 10px;font-size:12px;line-height:1.7;font-family:'Klee One',sans-serif;color:rgba(219,216,211,.85);user-select:text;cursor:text}
-.ma::placeholder{color:rgba(219,216,211,.2);font-size:11px}
-.ma::selection{background:rgba(219,216,211,.15)}
-.ma::-webkit-scrollbar{width:2px}.ma::-webkit-scrollbar-thumb{background:rgba(219,216,211,.1);border-radius:2px}
-.bbar{height:20px;flex-shrink:0;display:flex;align-items:center;padding:0 8px;border-top:1px solid rgba(219,216,211,.04)}
-.cc{margin-left:auto;font-size:8px;color:rgba(219,216,211,.15)}
-.resize{position:absolute;bottom:0;right:0;width:14px;height:14px;cursor:nwse-resize;opacity:0;transition:opacity .15s;color:rgba(219,216,211,.2)}
-.note:hover .resize{opacity:.3}
-.tab-ren{background:transparent;border:none;outline:none;border-bottom:1px solid rgba(219,216,211,.4);font-size:9px;font-weight:700;color:#dbd8d3;width:36px;cursor:text}
-@media all and (display-mode:standalone),(max-width:500px){.note{position:relative;top:0;right:0;width:100%!important;height:100%!important;box-shadow:none;border-radius:0}.hdr{border-radius:0;cursor:default}.resize,.hbtn.close{display:none}}
-.modal-bg{position:fixed;inset:0;background:rgba(42,56,72,.5);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)}
-.modal{background:#fff;border-radius:10px;padding:20px;width:100%;max-width:320px;color:#2a3848;box-shadow:0 8px 30px rgba(42,56,72,.25)}
-.modal h2{font-size:13px;margin-bottom:4px;color:#3a5a74}.modal p{font-size:10px;color:#8a9aaa;margin-bottom:12px;line-height:1.6}
-.modal label{display:block;font-size:9px;font-weight:700;color:#4a6888;margin-bottom:3px;margin-top:10px}
-.modal input,.modal textarea{width:100%;padding:7px 9px;border:1px solid #dbd8d3;border-radius:6px;font-size:11px;outline:none;color:#2a3848}
-.modal input:focus,.modal textarea:focus{border-color:#4a6888}
-.modal textarea{height:60px;resize:vertical;font-family:monospace;font-size:10px}
-.modal .hint{font-size:8px;color:#aaa;margin-top:2px}
-.modal-btns{display:flex;gap:8px;margin-top:14px}
-.modal-btns button{flex:1;padding:8px;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer}
-.mg{background:#4a6888;color:#dbd8d3}.mg:hover{background:#3a5a74}
-.ms{background:#dbd8d3;color:#4a6888}.ms:hover{background:#ccc9c4}
-.modal .err{color:#c0392b;font-size:9px;margin-top:6px;display:none}
-.hidden{display:none!important}</style></head>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Klee+One&family=Outfit:wght@400;600&family=Zen+Maru+Gothic:wght@400;700&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; overflow: hidden; }
+body { font-family: 'Zen Maru Gothic', sans-serif; background: transparent; }
+
+/* ── ノート本体 ── */
+.note {
+  position: fixed;
+  width: 280px; height: 300px;
+  top: 40px; right: 40px;
+  display: flex; flex-direction: column;
+  border-radius: 4px;
+  background: #4a6888;
+  box-shadow: 0 4px 24px rgba(42,56,72,.22), 0 1px 4px rgba(42,56,72,.15);
+  user-select: none;
+  z-index: 9999;
+  transition: box-shadow .15s;
+}
+.note.dragging { box-shadow: 0 12px 40px rgba(42,56,72,.32); }
+
+/* ── ヘッダー ── */
+.hdr {
+  display: flex; align-items: center;
+  height: 28px; min-height: 28px;
+  padding: 0 2px 0 6px;
+  cursor: grab;
+  border-radius: 4px 4px 0 0;
+  background: rgba(0,0,0,.08);
+  gap: 4px;
+}
+.logo {
+  display: flex; align-items: center; gap: 3px;
+  pointer-events: none; flex-shrink: 0;
+}
+.logo svg { width: 14px; height: 14px; }
+.logo-text {
+  font-family: 'Outfit', sans-serif;
+  font-size: 8px; font-weight: 600;
+  color: #dbd8d3; letter-spacing: 2.5px; opacity: .7;
+}
+.sync-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+  flex-shrink: 0; transition: all .4s; margin-left: 2px;
+}
+.sync-dot.off { background: rgba(219,216,211,.15); }
+.sync-dot.on  { background: #dbd8d3; box-shadow: 0 0 5px rgba(219,216,211,.4); animation: pulse 2.5s ease infinite; }
+.sync-dot.err { background: #c0392b; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+
+.hdr-spacer { flex: 1; }
+
+.hbtn {
+  width: 20px; height: 20px; flex-shrink: 0;
+  background: transparent; border: none;
+  color: rgba(219,216,211,.2); font-size: 11px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all .1s; border-radius: 3px;
+}
+.hbtn:hover { background: rgba(219,216,211,.08); color: rgba(219,216,211,.55); }
+.hbtn.del-tab { font-size: 12px; }
+.hbtn.del-tab:hover, .hbtn.close:hover {
+  color: #e8a87c; background: rgba(232,168,124,.08);
+}
+
+/* ── タブバー ── */
+.tab-bar {
+  display: flex; align-items: end;
+  height: 24px; min-height: 24px;
+  padding: 0 4px; gap: 1px;
+  overflow-x: auto; scrollbar-width: none;
+  border-bottom: 1px solid rgba(219,216,211,.06);
+}
+.tab-bar::-webkit-scrollbar { display: none; }
+
+.tab {
+  padding: 3px 10px 2px;
+  font-size: 9px; font-weight: 500;
+  color: rgba(219,216,211,.25);
+  cursor: pointer; transition: all .1s;
+  white-space: nowrap; flex-shrink: 0;
+  border-radius: 4px 4px 0 0;
+  background: transparent;
+}
+.tab:hover { background: rgba(255,255,255,.06); color: rgba(219,216,211,.5); }
+.tab.active { background: rgba(255,255,255,.1); color: #dbd8d3; font-weight: 700; }
+
+.tab-add {
+  width: 18px; height: 18px; flex-shrink: 0;
+  background: transparent; border: none;
+  color: rgba(219,216,211,.18); font-size: 12px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; border-radius: 3px;
+}
+.tab-add:hover { background: rgba(219,216,211,.06); color: rgba(219,216,211,.5); }
+
+/* ── コンテンツ ── */
+.content { flex: 1; position: relative; overflow: hidden; }
+.memo-page { position: absolute; inset: 0; display: none; flex-direction: column; }
+.memo-page.active { display: flex; }
+
+.memo-area {
+  flex: 1;
+  background: transparent; border: none; outline: none; resize: none;
+  padding: 6px 10px;
+  font-size: 12px; line-height: 1.7;
+  font-family: 'Klee One', sans-serif;
+  color: rgba(219,216,211,.85);
+  user-select: text; cursor: text;
+}
+.memo-area::placeholder { color: rgba(219,216,211,.2); font-size: 11px; }
+.memo-area::selection { background: rgba(219,216,211,.15); }
+.memo-area::-webkit-scrollbar { width: 2px; }
+.memo-area::-webkit-scrollbar-thumb { background: rgba(219,216,211,.1); border-radius: 2px; }
+
+/* ── フッター ── */
+.bottom-bar {
+  height: 20px; flex-shrink: 0;
+  display: flex; align-items: center;
+  padding: 0 8px;
+  border-top: 1px solid rgba(219,216,211,.04);
+}
+.char-count {
+  margin-left: auto;
+  font-size: 8px; color: rgba(219,216,211,.15);
+}
+
+/* ── リサイズ ── */
+.resize-handle {
+  position: absolute; bottom: 0; right: 0;
+  width: 14px; height: 14px;
+  cursor: nwse-resize; opacity: 0;
+  transition: opacity .15s;
+  color: rgba(219,216,211,.2);
+}
+.note:hover .resize-handle { opacity: .3; }
+
+/* ── タブ名編集 ── */
+.tab-rename {
+  background: transparent; border: none; outline: none;
+  border-bottom: 1px solid rgba(219,216,211,.4);
+  font-size: 9px; font-weight: 700;
+  color: #dbd8d3; width: 36px; cursor: text;
+}
+
+/* ── モーダル ── */
+.modal-bg {
+  position: fixed; inset: 0;
+  background: rgba(42,56,72,.5);
+  z-index: 99999;
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+  backdrop-filter: blur(4px);
+}
+.modal {
+  background: #fff; border-radius: 10px;
+  padding: 20px; width: 100%; max-width: 320px;
+  color: #2a3848;
+  box-shadow: 0 8px 30px rgba(42,56,72,.25);
+}
+.modal h2 { font-size: 13px; margin-bottom: 4px; color: #3a5a74; }
+.modal p  { font-size: 10px; color: #8a9aaa; margin-bottom: 12px; line-height: 1.6; }
+.modal label { display: block; font-size: 9px; font-weight: 700; color: #4a6888; margin-bottom: 3px; margin-top: 10px; }
+.modal input, .modal textarea {
+  width: 100%; padding: 7px 9px;
+  border: 1px solid #dbd8d3; border-radius: 6px;
+  font-size: 11px; outline: none; color: #2a3848;
+}
+.modal input:focus, .modal textarea:focus { border-color: #4a6888; }
+.modal textarea { height: 60px; resize: vertical; font-family: monospace; font-size: 10px; }
+.modal .hint { font-size: 8px; color: #aaa; margin-top: 2px; }
+.modal-btns { display: flex; gap: 8px; margin-top: 14px; }
+.modal-btns button {
+  flex: 1; padding: 8px; border: none; border-radius: 6px;
+  font-size: 11px; font-weight: 700; cursor: pointer;
+}
+.btn-primary { background: #4a6888; color: #dbd8d3; }
+.btn-primary:hover { background: #3a5a74; }
+.btn-secondary { background: #dbd8d3; color: #4a6888; }
+.btn-secondary:hover { background: #ccc9c4; }
+.modal .err { color: #c0392b; font-size: 9px; margin-top: 6px; display: none; }
+
+.hidden { display: none !important; }
+
+/* ── PWA / モバイル ── */
+@media all and (display-mode: standalone), (max-width: 500px) {
+  .note {
+    position: relative; top: 0; right: 0;
+    width: 100% !important; height: 100% !important;
+    box-shadow: none; border-radius: 0;
+  }
+  .hdr { border-radius: 0; cursor: default; }
+  .resize-handle, .hbtn.close { display: none; }
+}
+</style>
+</head>
 <body>
-<div class="modal-bg hidden" id="sM"><div class="modal">
-<h2>⚙ 同期設定</h2>
-<p>Firebaseで端末間同期。スキップでローカル専用。</p>
-<label>Firebase Config</label>
-<textarea id="cfgI" placeholder='{"apiKey":"...","databaseURL":"..."}'></textarea>
-<div class="hint">Firebase Console &gt; マイアプリ &gt; config</div>
-<label>同期コード</label>
-<input type="text" id="rmI" placeholder="myroom123">
-<div class="err" id="sE"></div>
-<div class="modal-btns"><button class="ms" id="bSk">スキップ</button><button class="mg" id="bCo">接続</button></div>
-</div></div>
-<div class="note" id="N">
-<div class="hdr" id="H">
-<div class="logo"><svg viewBox="0 0 96 136" fill="none"><path d="M48,6 L14,130 L28,130 L48,52 L68,130 L82,130Z" fill="#dbd8d3" opacity=".15" transform="translate(-3,-2)"/><path d="M48,6 L14,130 L28,130 L48,52 L68,130 L82,130Z" fill="#dbd8d3" opacity=".35" transform="translate(-1.5,-1)"/><path d="M48,6 L14,130 L28,130 L48,52 L68,130 L82,130Z" fill="#dbd8d3"/></svg><span class="logo-text">AQSEE</span></div>
-<div class="sync-dot off" id="sD"></div>
-<span class="hdr-s"></span>
-<button class="hbtn" id="bCf">⚙</button>
-<button class="hbtn del-tab" id="bDt" title="タブ削除">🗑</button>
-<button class="hbtn close" id="bCl">&times;</button></div>
-<div class="tab-bar" id="T"><button class="tab-add" id="tA">+</button></div>
-<div class="content" id="C"></div>
-<div class="bbar" id="bb"><span class="cc" id="cc">0</span></div>
-<div class="resize" id="R"><svg width="14" height="14" viewBox="0 0 16 16"><path d="M14 2L2 14M14 6L6 14M14 10L10 14" stroke="currentColor" stroke-opacity=".4" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+
+<!-- 同期設定モーダル -->
+<div class="modal-bg hidden" id="syncModal">
+  <div class="modal">
+    <h2>⚙ 同期設定</h2>
+    <p>Firebaseで端末間同期。スキップでローカル専用。</p>
+    <label>Firebase Config</label>
+    <textarea id="cfgInput" placeholder='{"apiKey":"...","databaseURL":"..."}'></textarea>
+    <div class="hint">Firebase Console &gt; マイアプリ &gt; config</div>
+    <label>同期コード</label>
+    <input type="text" id="roomInput" placeholder="myroom123">
+    <div class="err" id="syncErr"></div>
+    <div class="modal-btns">
+      <button class="btn-secondary" id="btnSkip">スキップ</button>
+      <button class="btn-primary" id="btnConnect">接続</button>
+    </div>
+  </div>
 </div>
-<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(function(){});
-(function(){
-var SK='smemo_v8',CK='smemo_cfg',st={tabs:[],at:null,x:null,y:null,w:280,h:300};
-var $n=document.getElementById('N'),$h=document.getElementById('H'),$tb=document.getElementById('T'),$ta=document.getElementById('tA'),$ct=document.getElementById('C'),$cc=document.getElementById('cc'),$rz=document.getElementById('R'),$dot=document.getElementById('sD');
-document.getElementById('bDt').addEventListener('click',function(){if(st.tabs.length>1){var c=gAT();if(c)rm(c.id)}});
-var fbRef=null,fbOK=0,skipR=0,wt=null;
-function initFB(){var c;try{c=JSON.parse(localStorage.getItem(CK))}catch(e){}if(!c||!c.config||!c.room)return;try{firebase.initializeApp(c.config);fbRef=firebase.database().ref('rooms/'+c.room);fbOK=1;$dot.className='sync-dot on';fbRef.on('value',function(s){var v=s.val();if(!v||skipR)return;if(v.tabs){st.tabs.forEach(function(t){if(t.tE)t.tE.remove();if(t.pE)t.pE.remove()});st.tabs=[];v.tabs.forEach(function(d){var t=mkD(d.id,d.nm);t.tx=d.tx||'';rBtn(t);rP(t)});if(v.at)sw(v.at,1);saveL()}})}catch(e){$dot.className='sync-dot err'}}
-function syncR(){if(!fbOK)return;if(wt)clearTimeout(wt);wt=setTimeout(function(){skipR=1;fbRef.set({tabs:st.tabs.map(function(t){return{id:t.id,nm:t.nm,tx:t.tx}}),at:st.at}).then(function(){setTimeout(function(){skipR=0},500)}).catch(function(){skipR=0;$dot.className='sync-dot err'})},400)}
-function saveL(){try{localStorage.setItem(SK,JSON.stringify({tabs:st.tabs.map(function(t){return{id:t.id,nm:t.nm,tx:t.tx}}),at:st.at,x:st.x,y:st.y,w:st.w,h:st.h}))}catch(e){}}
-function save(){saveL();syncR()}
-function load(){try{var r=localStorage.getItem(SK);if(!r)return!1;var d=JSON.parse(r);if(!d||!d.tabs||!d.tabs.length)return!1;if(d.w)st.w=d.w;if(d.h)st.h=d.h;var p=matchMedia('(display-mode:standalone)').matches||innerWidth<=500;if(d.x!=null&&!p){st.x=d.x;st.y=d.y;$n.style.left=d.x+'px';$n.style.top=d.y+'px';$n.style.right='auto'}if(!p){$n.style.width=st.w+'px';$n.style.height=st.h+'px'}d.tabs.forEach(function(td){var t=mkD(td.id,td.nm);t.tx=td.tx||'';rBtn(t);rP(t)});if(d.at)sw(d.at,1);return!0}catch(e){return!1}}
-var drag=0,dsx,dsy,dnx,dny;
-$h.addEventListener('mousedown',function(e){if(e.target.closest('button')||e.target.closest('.logo')||e.target.classList.contains('sync-dot'))return;if(matchMedia('(display-mode:standalone)').matches||innerWidth<=500)return;e.preventDefault();drag=1;var r=$n.getBoundingClientRect();dsx=e.clientX;dsy=e.clientY;dnx=r.left;dny=r.top;$n.classList.add('dragging')});
-$h.addEventListener('touchstart',function(e){if(e.target.closest('button')||e.target.closest('.logo'))return;if(matchMedia('(display-mode:standalone)').matches||innerWidth<=500)return;var t=e.touches[0];drag=1;var r=$n.getBoundingClientRect();dsx=t.clientX;dsy=t.clientY;dnx=r.left;dny=r.top},{passive:1});
-var rzg=0,rx,ry,rw,rh;
-$rz.addEventListener('mousedown',function(e){e.preventDefault();e.stopPropagation();rzg=1;rx=e.clientX;ry=e.clientY;rw=st.w;rh=st.h});
-document.addEventListener('mousemove',function(e){if(drag){$n.style.left=(dnx+e.clientX-dsx)+'px';$n.style.top=(dny+e.clientY-dsy)+'px';$n.style.right='auto';st.x=parseInt($n.style.left);st.y=parseInt($n.style.top)}if(rzg){st.w=Math.max(200,rw+e.clientX-rx);st.h=Math.max(160,rh+e.clientY-ry);$n.style.width=st.w+'px';$n.style.height=st.h+'px'}});
-document.addEventListener('touchmove',function(e){if(drag){var t=e.touches[0];$n.style.left=(dnx+t.clientX-dsx)+'px';$n.style.top=(dny+t.clientY-dsy)+'px';$n.style.right='auto';st.x=parseInt($n.style.left);st.y=parseInt($n.style.top)}},{passive:1});
-document.addEventListener('mouseup',function(){if(drag){drag=0;$n.classList.remove('dragging');saveL()}if(rzg){rzg=0;saveL()}});
-document.addEventListener('touchend',function(){if(drag){drag=0;saveL()}});
-document.getElementById('bCl').addEventListener('click',function(){$n.style.transition='all .15s';$n.style.transform='scale(.9)';$n.style.opacity='0';setTimeout(function(){window.close();$n.style.display='none'},150)});
-var $m=document.getElementById('sM');
-document.getElementById('bCf').addEventListener('click',function(){$m.classList.remove('hidden')});
-document.getElementById('bSk').addEventListener('click',function(){$m.classList.add('hidden')});
-document.getElementById('bCo').addEventListener('click',function(){var $e=document.getElementById('sE'),ct=document.getElementById('cfgI').value.trim(),rm=document.getElementById('rmI').value.trim();if(!ct||!rm){$e.textContent='Config\u3068\u30b3\u30fc\u30c9\u3092\u5165\u529b';$e.style.display='block';return}try{var c=JSON.parse(ct);if(!c.databaseURL){$e.textContent='databaseURL\u304c\u5fc5\u8981';$e.style.display='block';return}localStorage.setItem(CK,JSON.stringify({config:c,room:rm}));$m.classList.add('hidden');location.reload()}catch(e){$e.textContent='JSON\u30a8\u30e9\u30fc';$e.style.display='block'}});
-try{var ec=JSON.parse(localStorage.getItem(CK));if(ec){document.getElementById('cfgI').value=JSON.stringify(ec.config,null,2);document.getElementById('rmI').value=ec.room||''}}catch(e){}
-function gid(){return 't'+Date.now()+'_'+Math.random().toString(36).substr(2,3)}
-function mkD(id,nm){id=id||gid();nm=nm||''+(st.tabs.length+1);var t={id:id,nm:nm,tx:'',tE:null,pE:null,aE:null};st.tabs.push(t);return t}
-function nt(nm){var t=mkD(null,nm);rBtn(t);rP(t);sw(t.id);save();if(t.aE)setTimeout(function(){t.aE.focus()},50);return t}
-function rBtn(t){var b=document.createElement('div');b.className='tab';b.dataset.id=t.id;b.textContent=t.nm;b.addEventListener('click',function(e){e.stopPropagation();sw(t.id)});b.addEventListener('dblclick',function(e){e.stopPropagation();var inp=document.createElement('input');inp.className='tab-ren';inp.value=t.nm;b.textContent='';b.appendChild(inp);inp.focus();inp.select();function done(){var v=inp.value.trim();if(v)t.nm=v;b.textContent=t.nm;save()}inp.addEventListener('blur',done);inp.addEventListener('keydown',function(ev){if(ev.key==='Enter'){ev.preventDefault();inp.blur()}if(ev.key==='Escape'){inp.value=t.nm;inp.blur()}});inp.addEventListener('mousedown',function(ev){ev.stopPropagation()})});$tb.insertBefore(b,$ta);t.tE=b}
-function rP(t){var p=document.createElement('div');p.className='mp';p.dataset.id=t.id;var a=document.createElement('textarea');a.className='ma';a.placeholder='\u30e1\u30e2\u3092\u5165\u529b...';a.value=t.tx||'';a.addEventListener('input',function(){t.tx=a.value;uc(t);save()});p.appendChild(a);$ct.appendChild(p);t.pE=p;t.aE=a}
-function sw(id,n){st.at=id;st.tabs.forEach(function(t){var a=t.id===id;if(t.tE)t.tE.classList.toggle('active',a);if(t.pE)t.pE.classList.toggle('active',a)});var c=gAT();if(c){uc(c);if(c.aE&&document.hasFocus())c.aE.focus()}if(!n)save()}
-function rm(id){if(st.tabs.length<=1)return;var i=st.tabs.findIndex(function(t){return t.id===id});if(i<0)return;var t=st.tabs[i];if(t.tE)t.tE.remove();if(t.pE)t.pE.remove();st.tabs.splice(i,1);if(st.at===id)sw(st.tabs[Math.min(i,st.tabs.length-1)].id);save()}
-function gAT(){return st.tabs.find(function(t){return t.id===st.at})||st.tabs[0]}
-function uc(t){$cc.textContent=(t.tx||'').length}
-var ld=load();if(!ld){var t1=nt('memo');t1.tx='\u2699 \u540c\u671f\u8a2d\u5b9a\nW\u30af\u30ea\u30c3\u30af\u3067\u30bf\u30d6\u540d\u5909\u66f4\n\U0001f5d1 \u3067\u4eca\u306e\u30bf\u30d6\u3092\u524a\u9664\n+ \u3067\u65b0\u898f\u30bf\u30d6';if(t1.aE)t1.aE.value=t1.tx;uc(t1);nt('sub');sw(t1.id);saveL()}
-initFB();
-$ta.addEventListener('click',function(e){e.stopPropagation();nt()});
-document.addEventListener('keydown',function(e){if(e.ctrlKey&&(e.key==='t'||e.key==='n')){e.preventDefault();nt()}});
-})();</script>
-</body></html>
+
+<!-- メモ本体 -->
+<div class="note" id="note">
+  <div class="hdr" id="header">
+    <div class="logo">
+      <svg viewBox="0 0 96 136" fill="none">
+        <path d="M48,6 L14,130 L28,130 L48,52 L68,130 L82,130Z" fill="#dbd8d3" opacity=".15" transform="translate(-3,-2)"/>
+        <path d="M48,6 L14,130 L28,130 L48,52 L68,130 L82,130Z" fill="#dbd8d3" opacity=".35" transform="translate(-1.5,-1)"/>
+        <path d="M48,6 L14,130 L28,130 L48,52 L68,130 L82,130Z" fill="#dbd8d3"/>
+      </svg>
+      <span class="logo-text">AQSEE</span>
+    </div>
+    <div class="sync-dot off" id="syncDot"></div>
+    <span class="hdr-spacer"></span>
+    <button class="hbtn" id="btnConfig">⚙</button>
+    <button class="hbtn del-tab" id="btnDelTab" title="タブ削除">🗑</button>
+    <button class="hbtn close" id="btnClose">&times;</button>
+  </div>
+  <div class="tab-bar" id="tabBar">
+    <button class="tab-add" id="tabAdd">+</button>
+  </div>
+  <div class="content" id="content"></div>
+  <div class="bottom-bar">
+    <span class="char-count" id="charCount">0</span>
+  </div>
+  <div class="resize-handle" id="resizeHandle">
+    <svg width="14" height="14" viewBox="0 0 16 16">
+      <path d="M14 2L2 14M14 6L6 14M14 10L10 14" stroke="currentColor" stroke-opacity=".4" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+  </div>
+</div>
+
+<script>
+(function () {
+  // ── 定数・要素 ──
+  var STORAGE_KEY = 'smemo_v8';
+  var CONFIG_KEY  = 'smemo_cfg';
+
+  var $note     = document.getElementById('note');
+  var $header   = document.getElementById('header');
+  var $tabBar   = document.getElementById('tabBar');
+  var $tabAdd   = document.getElementById('tabAdd');
+  var $content  = document.getElementById('content');
+  var $charCount= document.getElementById('charCount');
+  var $resize   = document.getElementById('resizeHandle');
+  var $syncDot  = document.getElementById('syncDot');
+  var $modal    = document.getElementById('syncModal');
+
+  // ── 状態 ──
+  var state = { tabs: [], activeTab: null, x: null, y: null, w: 280, h: 300 };
+
+  // ── Firebase ──
+  var fbRef = null, fbConnected = false, skipRemote = false, syncTimer = null;
+
+  function initFirebase() {
+    var cfg;
+    try { cfg = JSON.parse(localStorage.getItem(CONFIG_KEY)); } catch (e) {}
+    if (!cfg || !cfg.config || !cfg.room) return;
+
+    try {
+      firebase.initializeApp(cfg.config);
+      fbRef = firebase.database().ref('rooms/' + cfg.room);
+      fbConnected = true;
+      $syncDot.className = 'sync-dot on';
+
+      fbRef.on('value', function (snap) {
+        var val = snap.val();
+        if (!val || skipRemote) return;
+        if (!val.tabs) return;
+
+        // リモートデータで上書き
+        state.tabs.forEach(function (t) {
+          if (t.tabEl) t.tabEl.remove();
+          if (t.pageEl) t.pageEl.remove();
+        });
+        state.tabs = [];
+
+        val.tabs.forEach(function (d) {
+          var tab = createTabData(d.id, d.name);
+          tab.text = d.text || '';
+          renderTabButton(tab);
+          renderTabPage(tab);
+        });
+
+        if (val.activeTab) switchTab(val.activeTab, true);
+        saveLocal();
+      });
+    } catch (e) {
+      $syncDot.className = 'sync-dot err';
+    }
+  }
+
+  function syncRemote() {
+    if (!fbConnected) return;
+    if (syncTimer) clearTimeout(syncTimer);
+    syncTimer = setTimeout(function () {
+      skipRemote = true;
+      fbRef.set({
+        tabs: state.tabs.map(function (t) { return { id: t.id, name: t.name, text: t.text }; }),
+        activeTab: state.activeTab
+      }).then(function () {
+        setTimeout(function () { skipRemote = false; }, 500);
+      }).catch(function () {
+        skipRemote = false;
+        $syncDot.className = 'sync-dot err';
+      });
+    }, 400);
+  }
+
+  // ── ローカル保存・読込 ──
+  function saveLocal() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        tabs: state.tabs.map(function (t) { return { id: t.id, name: t.name, text: t.text }; }),
+        activeTab: state.activeTab,
+        x: state.x, y: state.y, w: state.w, h: state.h
+      }));
+    } catch (e) {}
+  }
+
+  function save() { saveLocal(); syncRemote(); }
+
+  function loadLocal() {
+    try {
+      var data = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      if (!data || !data.tabs || !data.tabs.length) return false;
+
+      if (data.w) state.w = data.w;
+      if (data.h) state.h = data.h;
+
+      var isPWA = matchMedia('(display-mode:standalone)').matches || innerWidth <= 500;
+
+      if (data.x != null && !isPWA) {
+        state.x = data.x;
+        state.y = data.y;
+        $note.style.left = data.x + 'px';
+        $note.style.top = data.y + 'px';
+        $note.style.right = 'auto';
+      }
+      if (!isPWA) {
+        $note.style.width = state.w + 'px';
+        $note.style.height = state.h + 'px';
+      }
+
+      data.tabs.forEach(function (td) {
+        var tab = createTabData(td.id, td.name);
+        tab.text = td.text || '';
+        renderTabButton(tab);
+        renderTabPage(tab);
+      });
+
+      if (data.activeTab) switchTab(data.activeTab, true);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // ── タブ管理 ──
+  function generateId() {
+    return 't' + Date.now() + '_' + Math.random().toString(36).substr(2, 3);
+  }
+
+  function createTabData(id, name) {
+    id = id || generateId();
+    name = name || '' + (state.tabs.length + 1);
+    var tab = { id: id, name: name, text: '', tabEl: null, pageEl: null, areaEl: null };
+    state.tabs.push(tab);
+    return tab;
+  }
+
+  function getActiveTab() {
+    return state.tabs.find(function (t) { return t.id === state.activeTab; }) || state.tabs[0];
+  }
+
+  function updateCharCount(tab) {
+    $charCount.textContent = (tab.text || '').length;
+  }
+
+  function newTab(name) {
+    var tab = createTabData(null, name);
+    renderTabButton(tab);
+    renderTabPage(tab);
+    switchTab(tab.id);
+    save();
+    if (tab.areaEl) setTimeout(function () { tab.areaEl.focus(); }, 50);
+    return tab;
+  }
+
+  function removeTab(id) {
+    if (state.tabs.length <= 1) return;
+    var idx = state.tabs.findIndex(function (t) { return t.id === id; });
+    if (idx < 0) return;
+    var tab = state.tabs[idx];
+    if (tab.tabEl) tab.tabEl.remove();
+    if (tab.pageEl) tab.pageEl.remove();
+    state.tabs.splice(idx, 1);
+    if (state.activeTab === id) {
+      switchTab(state.tabs[Math.min(idx, state.tabs.length - 1)].id);
+    }
+    save();
+  }
+
+  function switchTab(id, noSave) {
+    state.activeTab = id;
+    state.tabs.forEach(function (t) {
+      var isActive = t.id === id;
+      if (t.tabEl) t.tabEl.classList.toggle('active', isActive);
+      if (t.pageEl) t.pageEl.classList.toggle('active', isActive);
+    });
+    var current = getActiveTab();
+    if (current) {
+      updateCharCount(current);
+      if (current.areaEl && document.hasFocus()) current.areaEl.focus();
+    }
+    if (!noSave) save();
+  }
+
+  // ── タブUI描画 ──
+  function renderTabButton(tab) {
+    var btn = document.createElement('div');
+    btn.className = 'tab';
+    btn.dataset.id = tab.id;
+    btn.textContent = tab.name;
+
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      switchTab(tab.id);
+    });
+
+    btn.addEventListener('dblclick', function (e) {
+      e.stopPropagation();
+      var input = document.createElement('input');
+      input.className = 'tab-rename';
+      input.value = tab.name;
+      btn.textContent = '';
+      btn.appendChild(input);
+      input.focus();
+      input.select();
+
+      function finish() {
+        var val = input.value.trim();
+        if (val) tab.name = val;
+        btn.textContent = tab.name;
+        save();
+      }
+      input.addEventListener('blur', finish);
+      input.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); }
+        if (ev.key === 'Escape') { input.value = tab.name; input.blur(); }
+      });
+      input.addEventListener('mousedown', function (ev) { ev.stopPropagation(); });
+    });
+
+    $tabBar.insertBefore(btn, $tabAdd);
+    tab.tabEl = btn;
+  }
+
+  function renderTabPage(tab) {
+    var page = document.createElement('div');
+    page.className = 'memo-page';
+    page.dataset.id = tab.id;
+
+    var area = document.createElement('textarea');
+    area.className = 'memo-area';
+    area.placeholder = 'メモを入力...';
+    area.value = tab.text || '';
+    area.addEventListener('input', function () {
+      tab.text = area.value;
+      updateCharCount(tab);
+      save();
+    });
+
+    page.appendChild(area);
+    $content.appendChild(page);
+    tab.pageEl = page;
+    tab.areaEl = area;
+  }
+
+  // ── ドラッグ ──
+  var dragging = false, dragSX, dragSY, dragNX, dragNY;
+
+  $header.addEventListener('mousedown', function (e) {
+    if (e.target.closest('button') || e.target.closest('.logo') || e.target.classList.contains('sync-dot')) return;
+    if (matchMedia('(display-mode:standalone)').matches || innerWidth <= 500) return;
+    e.preventDefault();
+    dragging = true;
+    var rect = $note.getBoundingClientRect();
+    dragSX = e.clientX; dragSY = e.clientY;
+    dragNX = rect.left;  dragNY = rect.top;
+    $note.classList.add('dragging');
+  });
+
+  $header.addEventListener('touchstart', function (e) {
+    if (e.target.closest('button') || e.target.closest('.logo')) return;
+    if (matchMedia('(display-mode:standalone)').matches || innerWidth <= 500) return;
+    var touch = e.touches[0];
+    dragging = true;
+    var rect = $note.getBoundingClientRect();
+    dragSX = touch.clientX; dragSY = touch.clientY;
+    dragNX = rect.left;     dragNY = rect.top;
+  }, { passive: true });
+
+  // ── リサイズ ──
+  var resizing = false, resSX, resSY, resW, resH;
+
+  $resize.addEventListener('mousedown', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    resizing = true;
+    resSX = e.clientX; resSY = e.clientY;
+    resW = state.w; resH = state.h;
+  });
+
+  // ── マウス・タッチ移動 ──
+  document.addEventListener('mousemove', function (e) {
+    if (dragging) {
+      $note.style.left = (dragNX + e.clientX - dragSX) + 'px';
+      $note.style.top  = (dragNY + e.clientY - dragSY) + 'px';
+      $note.style.right = 'auto';
+      state.x = parseInt($note.style.left);
+      state.y = parseInt($note.style.top);
+    }
+    if (resizing) {
+      state.w = Math.max(200, resW + e.clientX - resSX);
+      state.h = Math.max(160, resH + e.clientY - resSY);
+      $note.style.width  = state.w + 'px';
+      $note.style.height = state.h + 'px';
+    }
+  });
+
+  document.addEventListener('touchmove', function (e) {
+    if (dragging) {
+      var touch = e.touches[0];
+      $note.style.left = (dragNX + touch.clientX - dragSX) + 'px';
+      $note.style.top  = (dragNY + touch.clientY - dragSY) + 'px';
+      $note.style.right = 'auto';
+      state.x = parseInt($note.style.left);
+      state.y = parseInt($note.style.top);
+    }
+  }, { passive: true });
+
+  document.addEventListener('mouseup', function () {
+    if (dragging) { dragging = false; $note.classList.remove('dragging'); saveLocal(); }
+    if (resizing) { resizing = false; saveLocal(); }
+  });
+
+  document.addEventListener('touchend', function () {
+    if (dragging) { dragging = false; saveLocal(); }
+  });
+
+  // ── ボタンイベント ──
+  document.getElementById('btnDelTab').addEventListener('click', function () {
+    if (state.tabs.length > 1) {
+      var current = getActiveTab();
+      if (current) removeTab(current.id);
+    }
+  });
+
+  document.getElementById('btnClose').addEventListener('click', function () {
+    $note.style.transition = 'all .15s';
+    $note.style.transform = 'scale(.9)';
+    $note.style.opacity = '0';
+    setTimeout(function () { window.close(); $note.style.display = 'none'; }, 150);
+  });
+
+  document.getElementById('btnConfig').addEventListener('click', function () {
+    $modal.classList.remove('hidden');
+  });
+
+  document.getElementById('btnSkip').addEventListener('click', function () {
+    $modal.classList.add('hidden');
+  });
+
+  document.getElementById('btnConnect').addEventListener('click', function () {
+    var $err = document.getElementById('syncErr');
+    var configText = document.getElementById('cfgInput').value.trim();
+    var room = document.getElementById('roomInput').value.trim();
+
+    if (!configText || !room) {
+      $err.textContent = 'Configとコードを入力';
+      $err.style.display = 'block';
+      return;
+    }
+    try {
+      var config = JSON.parse(configText);
+      if (!config.databaseURL) {
+        $err.textContent = 'databaseURLが必要';
+        $err.style.display = 'block';
+        return;
+      }
+      localStorage.setItem(CONFIG_KEY, JSON.stringify({ config: config, room: room }));
+      $modal.classList.add('hidden');
+      location.reload();
+    } catch (e) {
+      $err.textContent = 'JSONエラー';
+      $err.style.display = 'block';
+    }
+  });
+
+  // 既存config読み込み
+  try {
+    var existingCfg = JSON.parse(localStorage.getItem(CONFIG_KEY));
+    if (existingCfg) {
+      document.getElementById('cfgInput').value = JSON.stringify(existingCfg.config, null, 2);
+      document.getElementById('roomInput').value = existingCfg.room || '';
+    }
+  } catch (e) {}
+
+  $tabAdd.addEventListener('click', function (e) {
+    e.stopPropagation();
+    newTab();
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.ctrlKey && (e.key === 't' || e.key === 'n')) {
+      e.preventDefault();
+      newTab();
+    }
+  });
+
+  // ── 初期化 ──
+  var loaded = loadLocal();
+  if (!loaded) {
+    var t1 = newTab('memo');
+    t1.text = '⚙ 同期設定\nWクリックでタブ名変更\n🗑 で今のタブを削除\n+ で新規タブ';
+    if (t1.areaEl) t1.areaEl.value = t1.text;
+    updateCharCount(t1);
+    newTab('sub');
+    switchTab(t1.id);
+    saveLocal();
+  }
+
+  initFirebase();
+
+  // Service Worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(function () {});
+  }
+})();
+</script>
+</body>
+</html>
